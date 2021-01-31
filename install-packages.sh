@@ -231,3 +231,113 @@ cd grep-3.4
             --bindir=/bin
 make
 make DESTDIR=$LFS install
+cd ..
+
+tar -xvf gzip-1.10.tar.xz
+cd gzip-1.10
+./configure --prefix=/usr --host=$LFS_TGT
+make
+make DESTDIR=$LFS install
+mv -v $LFS/usr/bin/gzip $LFS/bin
+cd ..
+
+tar -xvf make-4.3.tar.gz
+cd make-4.3
+./configure --prefix=/usr   \
+            --without-guile \
+            --host=$LFS_TGT \
+            --build=$(build-aux/config.guess)
+make
+make DESTDIR=$LFS install
+cd ..
+
+tar -xvf patch-2.7.6.tar.xz
+cd patch-2.7.6
+./configure --prefix=/usr   \
+            --host=$LFS_TGT \
+            --build=$(build-aux/config.guess)
+make
+make DESTDIR=$LFS install
+cd ..
+
+tar -xvf sed-4.8.tar.xz
+cd sed-4.8
+./configure --prefix=/usr   \
+            --host=$LFS_TGT \
+            --bindir=/bin
+make
+make DESTDIR=$LFS install
+cd ..
+
+tar -xvf tar-1.32.tar.xz
+cd tar-1.32
+./configure --prefix=/usr                     \
+            --host=$LFS_TGT                   \
+            --build=$(build-aux/config.guess) \
+            --bindir=/bin
+make
+make DESTDIR=$LFS install
+cd ..
+
+tar -xvf xz-5.2.5.tar.xz
+cd xz-5.2.5
+./configure --prefix=/usr                     \
+            --host=$LFS_TGT                   \
+            --build=$(build-aux/config.guess) \
+            --disable-static                  \
+            --docdir=/usr/share/doc/xz-5.2.5
+make
+make DESTDIR=$LFS install
+mv -v $LFS/usr/bin/{lzma,unlzma,lzcat,xz,unxz,xzcat}  $LFS/bin
+mv -v $LFS/usr/lib/liblzma.so.*                       $LFS/lib
+ln -svf ../../lib/$(readlink $LFS/usr/lib/liblzma.so) $LFS/usr/lib/liblzma.so
+cd ..
+
+cd binutils-2.35
+rm -rvf build
+mkdir -v build
+cd build
+../configure                   \
+    --prefix=/usr              \
+    --build=$(../config.guess) \
+    --host=$LFS_TGT            \
+    --disable-nls              \
+    --enable-shared            \
+    --disable-werror           \
+    --enable-64-bit-bfd
+make
+make DESTDIR=$LFS install
+cd ..
+
+cd gcc-10.2.0
+rm -rvf build
+case $(uname -m) in
+  x86_64)
+    sed -e '/m64=/s/lib64/lib/' -i.orig gcc/config/i386/t-linux64
+  ;;
+esac
+mkdir -v build
+cd build
+mkdir -pv $LFS_TGT/libgcc
+ln -s ../../../libgcc/gthr-posix.h $LFS_TGT/libgcc/gthr-default.h
+../configure                                       \
+    --build=$(../config.guess)                     \
+    --host=$LFS_TGT                                \
+    --prefix=/usr                                  \
+    CC_FOR_TARGET=$LFS_TGT-gcc                     \
+    --with-build-sysroot=$LFS                      \
+    --enable-initfini-array                        \
+    --disable-nls                                  \
+    --disable-multilib                             \
+    --disable-decimal-float                        \
+    --disable-libatomic                            \
+    --disable-libgomp                              \
+    --disable-libquadmath                          \
+    --disable-libssp                               \
+    --disable-libvtv                               \
+    --disable-libstdcxx                            \
+    --enable-languages=c,c++
+make
+make DESTDIR=$LFS install
+ln -sv gcc $LFS/usr/bin/cc
+cd ..
